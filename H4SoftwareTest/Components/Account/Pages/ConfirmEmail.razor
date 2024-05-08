@@ -143,19 +143,6 @@
 
         string base64 = Convert.ToBase64String(ms.ToArray());
         _imageSource = string.Format("data:image/png;base64,{0}", base64);
-
-
-
-        // using MemoryStream ms = new();
-        // QRCodeGenerator qrCodeGenerate = new();
-        // QRCodeData qrCodeData = qrCodeGenerate.CreateQrCode(authenticatorUri, QRCodeGenerator.ECCLevel.Q);
-        // QRCode qrCode = new(qrCodeData);
-
-        // using System.Drawing.Bitmap qrBitMap = qrCode.GetGraphic(20);
-        // qrBitMap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-        // string base64 = Convert.ToBase64String(ms.ToArray());
-
-        // _imageSource = string.Format("data:image/png;base64,{0}", base64);
     }
 
 }
