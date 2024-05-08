@@ -2,6 +2,8 @@
 @* @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "AuthenticatedUser")] *@
 
 @inject AuthenticationStateProvider _authenticationStateProvider;
+@inject Codes.RoleHandler _roleHandler;
+@inject IServiceProvider _serviceProvider;
 
 <PageTitle>Home</PageTitle>
 
@@ -24,6 +26,15 @@
     <div>
         <h1>Hello, world!</h1>
         Welcome to your new app 2.
+
+        @if (_isAdmin)
+        {
+            <div>You are admin.</div>
+        }
+        else
+        {
+            <div>You are NOT admin.</div>
+        }
     </div>
 }
 else
@@ -35,11 +46,17 @@ else
 
 @code {
     private bool _isAuthenticated;
+    private bool _isAdmin;
 
     protected override async Task OnInitializedAsync()
     {
+
         var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         _isAuthenticated = user.Identity.IsAuthenticated;
+        _isAdmin = user.IsInRole("Admin");
+
+
+        //await _roleHandler.CreateUserRolesAsync(user.Identity.Name, "Admin", _serviceProvider);
     }
 }

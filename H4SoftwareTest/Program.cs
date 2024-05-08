@@ -1,3 +1,4 @@
+using H4SoftwareTest.Codes;
 using H4SoftwareTest.Components;
 using H4SoftwareTest.Components.Account;
 using H4SoftwareTest.Data;
@@ -35,6 +36,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
@@ -48,8 +50,15 @@ builder.Services.AddAuthorization(options =>
     {
         policy.RequireAuthenticatedUser();
     });
+
+    options.AddPolicy("RequireAdmin", policy =>
+    {
+        policy.RequireRole("Admin");
+    });
+
 });
 
+builder.Services.AddSingleton<RoleHandler>();
 
 var app = builder.Build();
 
