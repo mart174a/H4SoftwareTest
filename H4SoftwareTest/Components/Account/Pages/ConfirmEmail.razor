@@ -15,10 +15,10 @@
 @inject IdentityUserAccessor UserAccessor
 @inject UrlEncoder UrlEncoder
 
-@using QRCoder;
-@using System.Drawing;
-
-
+@* @using QRCoder;
+@using System.Drawing; *@
+@using SkiaSharp;
+@using SkiaSharp.QrCode;
 
 
 <PageTitle>Confirm email</PageTitle>
@@ -120,16 +120,42 @@
 
     private void CreateQRImage(string authenticatorUri)
     {
-        using MemoryStream ms = new();
-        QRCodeGenerator qrCodeGenerate = new();
-        QRCodeData qrCodeData = qrCodeGenerate.CreateQrCode(authenticatorUri, QRCodeGenerator.ECCLevel.Q);
-        QRCode qrCode = new(qrCodeData);
+        using var generator = new QRCodeGenerator();
+        var qr = generator.CreateQrCode(authenticatorUri, ECCLevel.H);
 
-        using System.Drawing.Bitmap qrBitMap = qrCode.GetGraphic(20);
-        qrBitMap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+        var info = new SKImageInfo(300, 300);
+        using var surface = SKSurface.Create(info);
+
+        var canvas = surface.Canvas;
+        canvas.Render(qr, 300, 300, SKColors.White, SKColors.Black);
+
+        var image = surface.Snapshot();
+        var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        Stream stream = data.AsStream();
+
+        // ---------
+        MemoryStream ms = new MemoryStream();
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
+            ms.Write(buffer, 0, bytesRead);
+        ms.Seek(0, SeekOrigin.Begin);
+
         string base64 = Convert.ToBase64String(ms.ToArray());
-
         _imageSource = string.Format("data:image/png;base64,{0}", base64);
+
+
+
+        // using MemoryStream ms = new();
+        // QRCodeGenerator qrCodeGenerate = new();
+        // QRCodeData qrCodeData = qrCodeGenerate.CreateQrCode(authenticatorUri, QRCodeGenerator.ECCLevel.Q);
+        // QRCode qrCode = new(qrCodeData);
+
+        // using System.Drawing.Bitmap qrBitMap = qrCode.GetGraphic(20);
+        // qrBitMap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+        // string base64 = Convert.ToBase64String(ms.ToArray());
+
+        // _imageSource = string.Format("data:image/png;base64,{0}", base64);
     }
 
 }
