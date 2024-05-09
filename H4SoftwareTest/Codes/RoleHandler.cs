@@ -5,20 +5,30 @@ namespace H4SoftwareTest.Codes;
 
 public class RoleHandler
 {
-    public async Task CreateUserRolesAsync(string user, string role, IServiceProvider serviceProvider)
+    public async Task<bool> CreateUserRolesAsync(string user, string role, IServiceProvider serviceProvider)
     {
-        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-        var userRoleCheck = await roleManager.RoleExistsAsync(role);
-        if (!userRoleCheck)
+        bool isCreated = false;
+        try
         {
-            var roleObj = new IdentityRole(role);
-            await roleManager.CreateAsync(roleObj);
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            var userRoleCheck = await roleManager.RoleExistsAsync(role);
+            if (!userRoleCheck)
+            {
+                var roleObj = new IdentityRole(role);
+                await roleManager.CreateAsync(roleObj);
+            }
+
+            ApplicationUser identityUser = await userManager.FindByEmailAsync(user);
+            await userManager.AddToRoleAsync(identityUser, role);
+
+            isCreated = true;
         }
-
-        ApplicationUser identityUser = await userManager.FindByEmailAsync(user);
-        await userManager.AddToRoleAsync(identityUser, role);
+        catch(Exception)
+        {
+            isCreated = false;
+        }
+        return isCreated;
     }
-
 }
