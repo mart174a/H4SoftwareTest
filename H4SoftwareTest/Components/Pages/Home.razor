@@ -2,8 +2,10 @@
 @* @attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "AuthenticatedUser")] *@
 
 @inject AuthenticationStateProvider _authenticationStateProvider;
-@* @inject Codes.RoleHandler _roleHandler; *@
+@inject Codes.RoleHandler _roleHandler;
 @inject IServiceProvider _serviceProvider;
+
+@inject Codes.HashingHandler _hashingHandler;
 
 <PageTitle>Home</PageTitle>
 
@@ -25,6 +27,8 @@ else
         <h1>You must log in to see the content.</h1>
     </div>
 }
+
+
 <br />
 
 @code {
@@ -39,6 +43,14 @@ else
         _isAuthenticated = user.Identity.IsAuthenticated;
         _isAdmin = user.IsInRole("Admin");
 
+        string txtToHash = "3333333333";
+        string hashedValue = _hashingHandler.BCryptHashing(txtToHash);
+
+        string txtToHash2 = "3333333333";
+        bool matched = _hashingHandler.BCryptHashingVerify(txtToHash2, hashedValue);
+
+        //bool matched = hashedValue == hashedValue2;
+        
         // if (_isAuthenticated)
         //     await _roleHandler.CreateUserRolesAsync(user.Identity.Name, "Admin", _serviceProvider);
     }

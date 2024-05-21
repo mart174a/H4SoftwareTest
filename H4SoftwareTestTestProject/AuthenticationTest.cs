@@ -27,13 +27,16 @@ public class AuthenticationTest
         //Arange
         var ctx = new TestContext();
         var authContext = ctx.AddTestAuthorization();
+        
+        // Login
         authContext.SetAuthorized("");
+        authContext.SetRoles("Admin");
 
         //Act
         var cut = ctx.RenderComponent<Home>();
         var homeObj = cut.Instance;
 
         //Assert
-        Assert.False(homeObj.());
+        Assert.True(homeObj._isAdmin);
     }
 }
