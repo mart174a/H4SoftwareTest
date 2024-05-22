@@ -76,8 +76,9 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 
 builder.Services.AddSingleton<HashingHandler>();
+builder.Services.AddSingleton<EncryptionHandler>();
 
-
+builder.Services.AddHttpClient();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

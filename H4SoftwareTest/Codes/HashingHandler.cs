@@ -6,14 +6,23 @@ namespace H4SoftwareTest.Codes;
 
 public class HashingHandler
 {
-    public string MD5Hashing(string txtToHash)
+    public dynamic MD5Hashing(string txtToHash, string returnType)
     {
         MD5 md5 = MD5.Create();
         byte[] txtToHashAsByteArray = Encoding.ASCII.GetBytes(txtToHash);
         byte[] hashedValue = md5.ComputeHash(txtToHashAsByteArray);
 
-        string hashedValueAsString = Convert.ToBase64String(hashedValue);
-        return hashedValueAsString;
+        if (returnType == "string")
+        {
+            string hashedValueAsString = Convert.ToBase64String(hashedValue);
+            return hashedValueAsString;
+        }
+        else if (returnType == "byteArray")
+        {
+            return hashedValue;
+        }
+        else
+            return null;
     }
 
     public string SHA2Hashing(string txtToHash)
@@ -54,12 +63,15 @@ public class HashingHandler
 
     public string BCryptHashing(string txtToHash)
     {
+        //Eks. 1
         //return BCrypt.Net.BCrypt.HashPassword(txtToHash);
 
+        //Eks. 2
         //int workFactor = 10;
         //bool enhancedEntropi = true;
         //return BCrypt.Net.BCrypt.HashPassword(txtToHash, workFactor, enhancedEntropi);
 
+        //Eks. 3
         string salt = BCrypt.Net.BCrypt.GenerateSalt();
         bool enhancedEntropi = true;
         HashType hashType = HashType.SHA256;
@@ -69,10 +81,13 @@ public class HashingHandler
 
     public bool BCryptHashingVerify(string txtToHash, string hashedValueAsString)
     {
+        //Eks. 1
         //return BCrypt.Net.BCrypt.Verify(txtToHash, hashedValueAsString);
 
+        //Eks. 2
         //return BCrypt.Net.BCrypt.Verify(txtToHash, hashedValueAsString, true);
 
+        //Eks. 3
         return BCrypt.Net.BCrypt.Verify(txtToHash, hashedValueAsString, true, HashType.SHA256);
     }
 }
