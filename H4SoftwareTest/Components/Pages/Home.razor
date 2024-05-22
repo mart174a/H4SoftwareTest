@@ -46,7 +46,8 @@ else
         _isAdmin = user.IsInRole("Admin");
 
         string txtToEncrypt = "Køb mælk";
-        string encryptedValue = await _encryptionHandler.EncryptAsymetriscParent(txtToEncrypt);
+        string encryptedValue = _encryptionHandler.EncryptAsymetrisc(txtToEncrypt);
+        string decryptValue = _encryptionHandler.DecryptAsymetrisc(encryptedValue);
 
         // string txtToEncrypt = "Køb mælk";
         // string encryptValue = _encryptionHandler.EncryptSymetrisc(txtToEncrypt);
