@@ -63,31 +63,14 @@ public class HashingHandler
 
     public string BCryptHashing(string txtToHash)
     {
-        //Eks. 1
-        //return BCrypt.Net.BCrypt.HashPassword(txtToHash);
-
-        //Eks. 2
-        //int workFactor = 10;
-        //bool enhancedEntropi = true;
-        //return BCrypt.Net.BCrypt.HashPassword(txtToHash, workFactor, enhancedEntropi);
-
-        //Eks. 3
         string salt = BCrypt.Net.BCrypt.GenerateSalt();
         bool enhancedEntropi = true;
         HashType hashType = HashType.SHA256;
         return BCrypt.Net.BCrypt.HashPassword(txtToHash, salt, enhancedEntropi, hashType);
-
     }
 
     public bool BCryptHashingVerify(string txtToHash, string hashedValueAsString)
     {
-        //Eks. 1
-        //return BCrypt.Net.BCrypt.Verify(txtToHash, hashedValueAsString);
-
-        //Eks. 2
-        //return BCrypt.Net.BCrypt.Verify(txtToHash, hashedValueAsString, true);
-
-        //Eks. 3
         return BCrypt.Net.BCrypt.Verify(txtToHash, hashedValueAsString, true, HashType.SHA256);
     }
 }

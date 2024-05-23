@@ -1,3 +1,4 @@
+using H4SoftwareTest.Models;
 using H4SoftwareTest.Codes;
 using H4SoftwareTest.Components;
 using H4SoftwareTest.Components.Account;
@@ -17,6 +18,9 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
+builder.Services.AddSingleton<RoleHandler>();
+builder.Services.AddSingleton<HashingHandler>();
+builder.Services.AddSingleton<EncryptionHandler>();
 
 builder.Services.AddAuthentication(options =>
     {
@@ -29,12 +33,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-
-/* Køre db migration med cli: Add-Migration [Name Of Migration] -context [Name Of Context Class] og
- bagefter køre: Update-Database -context [NameOfContextClass]*/
-//var connectionString = builder.Configuration.GetConnectionString("MockConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//    options.UseSqlite(connectionString));
+var toDoConnectionString = builder.Configuration.GetConnectionString("ToDoConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<TodoContext>(options =>
+    options.UseSqlServer(toDoConnectionString));
 
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -62,8 +63,6 @@ builder.Services.AddAuthorization(options =>
 
 });
 
-builder.Services.AddSingleton<RoleHandler>();
-
 builder.Services.Configure<IdentityOptions>(options =>
 {
     // Default Password settings.
@@ -75,8 +74,7 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequiredUniqueChars = 1;
 });
 
-builder.Services.AddSingleton<HashingHandler>();
-builder.Services.AddSingleton<EncryptionHandler>();
+
 
 builder.Services.AddHttpClient();
 var app = builder.Build();
