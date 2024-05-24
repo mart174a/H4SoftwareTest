@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -15,12 +13,26 @@ public class EncryptionHandler
 
     public EncryptionHandler(IDataProtectionProvider dataProtector, HttpClient httpClient)
     {
-        _dataProtector = dataProtector.CreateProtector("NielsErMinFavoritLære");
-
-        RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
-        _privateKey = rsa.ToXmlString(true);
-        _publicKey = rsa.ToXmlString(false);
+        _dataProtector = dataProtector.CreateProtector("SuperHemmelig");
         _httpClient = httpClient;
+
+
+        if (!File.Exists("privateKey.pem"))
+        {
+            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            {
+                _privateKey = rsa.ToXmlString(true);
+                _publicKey = rsa.ToXmlString(false);
+
+                File.WriteAllText("privateKey.pem", _privateKey);
+                File.WriteAllText("publicKey.pem", _publicKey);
+            }
+        }
+        else
+        {
+            _privateKey = File.ReadAllText("privateKey.pem");
+            _publicKey = File.ReadAllText("publicKey.pem");
+        }
     }
 
     #region Symetric encryption
@@ -33,23 +45,12 @@ public class EncryptionHandler
 
     #region Asymetric encryption
 
-    //public async Task<string> EncryptAsymetriscParent(string txtToEncrypt)
-    //{
-    //    string[] data = new string[2] { txtToEncrypt, _publicKey };
-    //    string serializedValue = JsonConvert.SerializeObject(data);
-    //    StringContent content = new StringContent(serializedValue, System.Text.Encoding.UTF8, "application/json");
-    //    var response = await _httpClient.PostAsync("https://localhost:7171/api/Encrypt", content);
-    //    string encryptedValue = await response.Content.ReadAsStringAsync();
-    //    return encryptedValue;
-    //}
-
-    // Dette kryptering kode er det som ligger i web api:
     public string EncryptAsymetrisc(string txtToEncrypt)
     {
         RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
         rsa.FromXmlString(_publicKey);
 
-        byte[] txtToEncryptAsByteArry = System.Text.Encoding.UTF8.GetBytes(txtToEncrypt);
+        byte[] txtToEncryptAsByteArry = Encoding.UTF8.GetBytes(txtToEncrypt);
         byte[] encryptedValue = rsa.Encrypt(txtToEncryptAsByteArry, true);
         string encryptedValueAsString = Convert.ToBase64String(encryptedValue);
 
@@ -61,11 +62,11 @@ public class EncryptionHandler
         RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
         rsa.FromXmlString(_privateKey);
 
-        byte[] txtToDecryptAsByteArry = Convert.FromBase64String(txtToDecrypt); // System.Text.Encoding.UTF8.GetBytes(txtToDecrypt);
-        byte[] encryptedValue = rsa.Decrypt(txtToDecryptAsByteArry, true);
-        string encryptedValueAsString = System.Text.Encoding.UTF8.GetString(encryptedValue);  // Convert.ToBase64String(encryptedValue);
+        byte[] byteArrayTextToDecrypt = Convert.FromBase64String(txtToDecrypt);
+        byte[] decryptedDataAsByteArray = rsa.Decrypt(byteArrayTextToDecrypt, true);
+        string decryptedDataAsString = Encoding.UTF8.GetString(decryptedDataAsByteArray);
 
-        return encryptedValueAsString;
+        return decryptedDataAsString;
     }
 
     #endregion

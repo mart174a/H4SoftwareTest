@@ -21,11 +21,16 @@
         <input type="text" @bind="_cprInput" style="width:150px;" />
         <br />
         <button class="btn-primary" @onclick="SubmitCpr" style="width:150px;height:45px;margin-top:4px;">Submit</button>
+        @if (_wrongCpr)
+        {
+            <p>Det indtastede CPR-nr er forkert</p>
+        }
     </div>
 }
 else
 {
     <div style="margin:0 auto;">
+        <h1>Velkommen @_encryptionHandler.DecryptSymetrisc(_encryptedUserName)</h1>
         <div style="font-weight:bold;margin-top:20px;">Indtast to-do item:</div>
         <input type="text" @bind="_todoItemInput" style="width:150px;" />
         <br />
@@ -47,33 +52,30 @@ else
                         @foreach (var item in TodoListObj)
                         {
                             <tr>
-                                @* <td>@_asymetriskEncryptionHandler.DecryptAsymetrisk(@item.Item)</td> *@
-                                <td>@item.Item</td>
+                                <td>@_encryptionHandler.DecryptAsymetrisc(@item.Item)</td>
                             </tr>
                         }
                     }
                 </tbody>
             </table>
             <div>
-                @if (_isAdmin)
-                {
-                    <button class="btn-primary" @onclick="ClearItems" style="width:150px;height:45px;margin-top:4px;">Clear todo list</button>
-                }
+                <button class="btn-primary" @onclick="ClearItems" style="width:150px;height:45px;margin-top:4px;">Clear todo list</button>
             </div>
         }
     </div>
 }
-
 
 <br />
 
 @code {
     private bool _isAuthenticated;
     private bool _isAdmin;
-    private string? _userName;
+    private string? _encryptedUserName;
+
     private string? _cpr;
     private string? _cprInput;
     private string? _todoItemInput;
+    bool _wrongCpr = false;
 
     private List<Todolist>? TodoListObj;
 
@@ -84,21 +86,89 @@ else
         _isAuthenticated = user.Identity.IsAuthenticated;
         _isAdmin = user.IsInRole("Admin");
 
-        _userName = user.Identity.Name;
+        //Symetrik encrypt
+        _encryptedUserName = _encryptionHandler.EncryptSymetrisc(user.Identity.Name);
     }
 
     private void SubmitCpr()
     {
-        
+        if (_cprInput == "" || _cprInput == null)
+            return;
+
+        //Hashing
+        string cprHashed = _hashingHandler.BCryptHashing(_cprInput);
+        var matchedUser = _toDoContext.Cprs.FirstOrDefault(x => x.User == _encryptedUserName);
+
+        if (matchedUser == null)
+        {
+            //Create
+            var cpr = new Cpr
+                {
+                    User = _encryptedUserName,
+                    CprNr = cprHashed
+                };
+
+            //Add
+            _toDoContext.Cprs.Add(cpr);
+
+            //Save
+            _toDoContext.SaveChanges();
+
+
+            _cpr = _toDoContext.Cprs.FirstOrDefault(x => x.User == _encryptedUserName)?.CprNr;
+        }
+        else
+        {
+            bool isMatch = _hashingHandler.BCryptHashingVerify(_cprInput, matchedUser.CprNr);
+
+            if (isMatch)
+            {
+                TodoListObj = _toDoContext.Todolists.Where(x => x.UserId == matchedUser.Id).ToList();
+                _cpr = _toDoContext.Cprs.FirstOrDefault(x => x.User == _encryptedUserName)?.CprNr;
+            }
+            else
+            {
+                _wrongCpr = true;
+            }
+        }
     }
 
     private void AddTodoItem()
     {
+        int userId = _toDoContext.Cprs.FirstOrDefault(x => x.User == _encryptedUserName).Id;
 
+        //Create
+        var todo = new Todolist
+            {
+                UserId = userId,
+                //Asymetric encrypt
+                Item = _encryptionHandler.EncryptAsymetrisc(_todoItemInput)
+            };
+
+        //Add
+        _toDoContext.Todolists.Add(todo);
+
+        //Save
+        _toDoContext.SaveChanges();
+
+
+        TodoListObj = _toDoContext.Todolists.Where(x => x.UserId == userId).ToList();
     }
 
     private void ClearItems()
     {
+        int userId = _toDoContext.Cprs.FirstOrDefault(x => x.User == _encryptedUserName).Id;
 
+        //Get items
+        var items = _toDoContext.Todolists.Where(a => a.UserId == userId).ToList();
+
+        //Remove each
+        foreach (var item in items)
+            _toDoContext.Todolists.Remove(item);
+
+        //Save
+        _toDoContext.SaveChanges();
+
+        TodoListObj = _toDoContext.Todolists.Where(x => x.UserId == userId).ToList();
     }
 }

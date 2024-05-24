@@ -6,6 +6,7 @@ using H4SoftwareTest.Data;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,8 +75,26 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequiredUniqueChars = 1;
 });
 
+builder.WebHost.UseKestrel((context, serverOptions) =>
+{
+    serverOptions.Configure(context.Configuration.GetSection("Kestrel"))
+        .Endpoint("HTTPS", listenOptions =>
+        {
+            listenOptions.HttpsOptions.SslProtocols = SslProtocols.Tls12;
+        });
+});
+
+string userFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+userFolder = Path.Combine(userFolder, ".aspnet");
+userFolder = Path.Combine(userFolder, "https");
+userFolder = Path.Combine(userFolder, "martin.pfx");
+builder.Configuration.GetSection("Kestrel:Endpoints:Https:Certificate:Path").Value = userFolder;
+
+string kestrelPassword = builder.Configuration.GetValue<string>("KestrelPassword");
+builder.Configuration.GetSection("Kestrel:Endpoints:Https:Certificate:Password").Value = kestrelPassword;
 
 
+builder.Services.AddDataProtection();
 builder.Services.AddHttpClient();
 var app = builder.Build();
 
